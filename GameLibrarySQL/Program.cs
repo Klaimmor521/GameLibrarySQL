@@ -35,7 +35,6 @@ namespace GameLibrarySQL
                         if (registration.RegisterUser(nickname, login, password, email))
                         {
                             Console.WriteLine("The registration went successfully!");
-                            userActions();
                         }
                         else
                             Console.WriteLine("Something went wrong or your account are already has on library!");
@@ -49,7 +48,10 @@ namespace GameLibrarySQL
                         password = Console.ReadLine();
 
                         if(logging.loginUser(login, password))
+                        {
                             Console.WriteLine("Great!");
+                            userActions();
+                        }
                         else
                             Console.WriteLine("This user is not existing!");
                         break;
@@ -63,7 +65,7 @@ namespace GameLibrarySQL
                 }
             }
         }
-        static string GetInput(string prompt, int maxLength, int minLength)
+        public static string GetInput(string prompt, int maxLength, int minLength)
         {
             string input;
             do
@@ -80,10 +82,11 @@ namespace GameLibrarySQL
         }
         static void userActions()
         {
+            Logging logging = new Logging(connectionString);
             int action;
             while(true)
             {
-                Console.WriteLine("You are in your game library!\nView all data(1)\nAdd game\nDelete game\n");
+                Console.WriteLine("You are in your game library!\nView all data(1)\nAdd game(2)\nDelete game(3)\nAdd a friend(4)\nDelete a friend(5)\nSee all friends(6)\nExit(7)");
                 action = Convert.ToInt32(Console.ReadLine());
                 switch (action) 
                 {
@@ -91,13 +94,25 @@ namespace GameLibrarySQL
                         logging.viewAllData(); 
                         break;
                     case 2:
-                        addGame();
+                        logging.addGame();
                         break;
                     case 3:
-                        removeGame();
+                        logging.removeGame();
                         break;
+                    case 4:
+                        logging.addFriend(1);
+                        break;
+                    case 5:
+                        //deleteFriend();
+                        break;
+                    case 6:
+                        //seeFriends();
+                        break;
+                    case 7:
+                        return;
                     default:
                         Console.WriteLine("Invalid option selected!");
+                        break;
                 }
             }
         }
