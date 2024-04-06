@@ -6,6 +6,7 @@ namespace GameLibrarySQL
 {
     internal class Logging
     {
+        public int currentUserId { get; private set; }
         private readonly string connectionString;
         public Logging(string connectionString)
         {
@@ -17,23 +18,21 @@ namespace GameLibrarySQL
             {
                 connection.Open();
 
-                var query = "SELECT COUNT(*) FROM users WHERE login = @login AND password = @password";
-
+                var query = "SELECT id FROM users WHERE login = @login AND password = @password";
                 using (var command = new NpgsqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@login", login);
                     command.Parameters.AddWithValue("@password", password);
 
-                    int userExists = Convert.ToInt32(command.ExecuteScalar());
+                    var result = command.ExecuteScalar();
 
-                    if (userExists > 0)
+                    if (result != null)
                     {
-                        //Пользователь найден
+                        currentUserId = Convert.ToInt32(result); //Обновляем CurrentUserId
                         return true;
                     }
                     else
                     {
-                        //Пользователь не найден
                         return false;
                     }
                 }
@@ -62,18 +61,19 @@ namespace GameLibrarySQL
                                 Console.WriteLine("No games found.");
                                 return;
                             }
-
+                            Console.WriteLine("---Games---");
                             while (reader.Read())
                             {
                                 Console.WriteLine($"{reader["name"]}, {reader["genre_name"]}, {reader["platform_name"]}");
                             }
+                            Console.WriteLine("-----------");
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Errror: {ex.Message}");
+                Console.WriteLine($"Error: {ex.Message}");
             }
         }
 
@@ -142,63 +142,105 @@ namespace GameLibrarySQL
                 }
             }
         }
+        //Добавление друга
         public void addFriend(int currentUserId)
         {
-            string friendNickname = Program.GetInput("Enter your friend's nickname: ", 30, 3);
+            Console.WriteLine("Enter the nickname of the friend you want to add:");
+            string friendNickname = Console.ReadLine().Trim();
+
+            //Проверка на пустой ввод
+            if (string.IsNullOrEmpty(friendNickname))
+            {
+                Console.WriteLine("Nickname cannot be empty.");
+                return;
+            }
 
             using (var connection = new NpgsqlConnection(connectionString))
             {
                 connection.Open();
 
-                //Проверяем, существует ли пользователь с таким никнеймом
-                var checkUserQuery = "SELECT id FROM users WHERE nickname = @nickname";
-                int friendUserId;
-                using (var checkUserCommand = new NpgsqlCommand(checkUserQuery, connection))
-                {
-                    checkUserCommand.Parameters.AddWithValue("@nickname", friendNickname);
-                    var result = checkUserCommand.ExecuteScalar();
-
-                    if (result != null)
-                    {
-                        friendUserId = Convert.ToInt32(result);
-                    }
-                    else
-                    {
-                        Console.WriteLine("No user found with that nickname.");
-                        return;
-                    }
-                }
-
-                //Проверяем, не добавлен ли уже этот пользователь в друзья
-                var checkFriendQuery = "SELECT COUNT(*) FROM friends WHERE userid = @userid AND friendid = @friendid";
+                //Проверка, существует ли уже друг с таким никнеймом для этого пользователя
+                var checkFriendQuery = "SELECT COUNT(*) FROM friends WHERE usersid = @currentUserId AND nickname = @friendNickname";
                 using (var checkFriendCommand = new NpgsqlCommand(checkFriendQuery, connection))
                 {
-                    checkFriendCommand.Parameters.AddWithValue("@userid", currentUserId);
-                    checkFriendCommand.Parameters.AddWithValue("@friendid", friendUserId);
-                    var friendCount = (long)checkFriendCommand.ExecuteScalar();
-
+                    checkFriendCommand.Parameters.AddWithValue("@currentUserId", currentUserId);
+                    checkFriendCommand.Parameters.AddWithValue("@friendNickname", friendNickname);
+                    int friendCount = Convert.ToInt32(checkFriendCommand.ExecuteScalar());
                     if (friendCount > 0)
                     {
-                        Console.WriteLine("This user is already your friend.");
+                        Console.WriteLine("This friend is already added.");
                         return;
                     }
                 }
 
-                // Добавляем запись о дружбе
-                var insertFriendQuery = "INSERT INTO friends (userid, friendid) VALUES (@userid, @friendid)";
+                //Добавление друга
+                var insertFriendQuery = "INSERT INTO friends (usersid, nickname) VALUES (@currentUserId, @friendNickname)";
                 using (var insertFriendCommand = new NpgsqlCommand(insertFriendQuery, connection))
                 {
-                    insertFriendCommand.Parameters.AddWithValue("@userid", currentUserId);
-                    insertFriendCommand.Parameters.AddWithValue("@friendid", friendUserId);
-
+                    insertFriendCommand.Parameters.AddWithValue("@currentUserId", currentUserId);
+                    insertFriendCommand.Parameters.AddWithValue("@friendNickname", friendNickname);
                     try
                     {
                         insertFriendCommand.ExecuteNonQuery();
-                        Console.WriteLine("Friend added successfully.");
+                        Console.WriteLine("Friend added successfully!");
                     }
-                    catch (NpgsqlException e)
+                    catch (NpgsqlException ex)
                     {
-                        Console.WriteLine($"Failed to add friend. Error: {e.Message}");
+                        Console.WriteLine($"An error occurred: {ex.Message}");
+                    }
+                }
+            }
+        }
+        //Удалить друга
+        public void deleteFriend(int currentUserId)
+        {
+            Console.WriteLine("Enter the nickname of the friend you want to remove:");
+            string friendNickname = Console.ReadLine().Trim();
+
+            using (var connection = new NpgsqlConnection(connectionString))
+            {
+                connection.Open();
+
+                var deleteFriendQuery = "DELETE FROM friends WHERE usersid = @currentUserId AND nickname = @friendNickname";
+                using (var deleteFriendCommand = new NpgsqlCommand(deleteFriendQuery, connection))
+                {
+                    deleteFriendCommand.Parameters.AddWithValue("@currentUserId", currentUserId);
+                    deleteFriendCommand.Parameters.AddWithValue("@friendNickname", friendNickname);
+
+                    int rowsAffected = deleteFriendCommand.ExecuteNonQuery();
+                    if (rowsAffected > 0)
+                        Console.WriteLine("Friend removed successfully.");
+                    else
+                        Console.WriteLine("No friend found with that nickname.");
+                }
+            }
+        }
+        //Показ всех друзей
+        public void seeAllFriends(int currentUserId)
+        {
+            using (var connection = new NpgsqlConnection(connectionString))
+            {
+                connection.Open();
+
+                var seeAllFriendsQuery = "SELECT nickname FROM friends WHERE usersid = @currentUserId";
+                using (var seeAllFriendsCommand = new NpgsqlCommand(seeAllFriendsQuery, connection))
+                {
+                    seeAllFriendsCommand.Parameters.AddWithValue("@currentUserId", currentUserId);
+
+                    using (var reader = seeAllFriendsCommand.ExecuteReader())
+                    {
+                        if (!reader.HasRows)
+                        {
+                            Console.WriteLine("You have no friends added.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Your friends:");
+                            while (reader.Read())
+                            {
+                                Console.WriteLine(reader["nickname"].ToString());
+                            }
+                        }
                     }
                 }
             }

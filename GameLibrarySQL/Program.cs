@@ -53,7 +53,7 @@ namespace GameLibrarySQL
                             userActions();
                         }
                         else
-                            Console.WriteLine("This user is not existing!");
+                            Console.WriteLine("This user is not existing or your login and password incorrect!");
                         break;
                     //Выйти из консоли
                     case 3:
@@ -86,6 +86,7 @@ namespace GameLibrarySQL
             int action;
             while(true)
             {
+                Console.WriteLine("----------------------------------------");
                 Console.WriteLine("You are in your game library!\nView all data(1)\nAdd game(2)\nDelete game(3)\nAdd a friend(4)\nDelete a friend(5)\nSee all friends(6)\nExit(7)");
                 action = Convert.ToInt32(Console.ReadLine());
                 switch (action) 
@@ -100,13 +101,13 @@ namespace GameLibrarySQL
                         logging.removeGame();
                         break;
                     case 4:
-                        logging.addFriend(1);
+                        logging.addFriend(logging.currentUserId);
                         break;
                     case 5:
-                        //deleteFriend();
+                        logging.deleteFriend(logging.currentUserId);
                         break;
                     case 6:
-                        //seeFriends();
+                        logging.seeAllFriends(logging.currentUserId);
                         break;
                     case 7:
                         return;
