@@ -25,21 +25,24 @@ namespace GameLibrarySQL
                     command.Parameters.AddWithValue("@password", password);
 
                     var result = command.ExecuteScalar();
-
-                    if (result != null)
+                    if (result != DBNull.Value && result != null)
                     {
-                        currentUserId = Convert.ToInt32(result); //Обновляем CurrentUserId
+                        this.currentUserId = Convert.ToInt32(result);
+                        Console.WriteLine($"Logged in with user ID: {this.currentUserId}");
                         return true;
                     }
                     else
                     {
+                        this.currentUserId = 0;
+                        Console.WriteLine("Login failed. User ID not found.");
                         return false;
                     }
                 }
             }
         }
-        public void viewAllData()
+        public void viewAllData(int currentUserId)
         {
+            Console.WriteLine($"Current User ID: {currentUserId}");
             try
             {
                 using (var connection = new NpgsqlConnection(connectionString))
@@ -47,13 +50,17 @@ namespace GameLibrarySQL
                     connection.Open();
 
                     var query = @"
-            SELECT g.name, ge.name AS genre_name, p.name AS platform_name 
-            FROM game g
-            JOIN genre ge ON g.genre_id = ge.id
-            JOIN platform p ON g.platform_id = p.id";
-
+                    SELECT g.name AS game_name, ge.name AS genre_name, p.name AS platform_name 
+                FROM library l
+                JOIN game g ON l.game_id = g.id
+                JOIN genre ge ON g.genre_id = ge.id
+                JOIN platform p ON g.platform_id = p.id
+                WHERE l.user_id = @currentUserId";  
+    
                     using (var command = new NpgsqlCommand(query, connection))
                     {
+                        command.Parameters.AddWithValue("@currentUserId", currentUserId);
+
                         using (var reader = command.ExecuteReader())
                         {
                             if (!reader.HasRows)
@@ -76,7 +83,6 @@ namespace GameLibrarySQL
                 Console.WriteLine($"Error: {ex.Message}");
             }
         }
-
         //Добавление игры
         public void addGame()
         {
@@ -159,35 +165,30 @@ namespace GameLibrarySQL
             {
                 connection.Open();
 
-                //Проверка, существует ли уже друг с таким никнеймом для этого пользователя
-                var checkFriendQuery = "SELECT COUNT(*) FROM friends WHERE usersid = @currentUserId AND nickname = @friendNickname";
-                using (var checkFriendCommand = new NpgsqlCommand(checkFriendQuery, connection))
+                //Проверяем, не добавлен ли уже этот nickname для текущего пользователя
+                using (var cmdCheckFriend = new NpgsqlCommand("SELECT COUNT(*) FROM friends WHERE usersid = @currentUserId AND nickname = @friendNickname", connection))
                 {
-                    checkFriendCommand.Parameters.AddWithValue("@currentUserId", currentUserId);
-                    checkFriendCommand.Parameters.AddWithValue("@friendNickname", friendNickname);
-                    int friendCount = Convert.ToInt32(checkFriendCommand.ExecuteScalar());
-                    if (friendCount > 0)
+                    cmdCheckFriend.Parameters.AddWithValue("@currentUserId", currentUserId);
+                    cmdCheckFriend.Parameters.AddWithValue("@friendNickname", friendNickname);
+                    int friendExists = Convert.ToInt32(cmdCheckFriend.ExecuteScalar());
+                    if (friendExists > 0)
                     {
-                        Console.WriteLine("This friend is already added.");
+                        Console.WriteLine("This friend has already been added.");
                         return;
                     }
                 }
 
-                //Добавление друга
-                var insertFriendQuery = "INSERT INTO friends (usersid, nickname) VALUES (@currentUserId, @friendNickname)";
-                using (var insertFriendCommand = new NpgsqlCommand(insertFriendQuery, connection))
+                //Добавляем друга
+                using (var cmdAddFriend = new NpgsqlCommand("INSERT INTO friends (usersid, nickname) VALUES (@currentUserId, @friendNickname)", connection))
                 {
-                    insertFriendCommand.Parameters.AddWithValue("@currentUserId", currentUserId);
-                    insertFriendCommand.Parameters.AddWithValue("@friendNickname", friendNickname);
-                    try
-                    {
-                        insertFriendCommand.ExecuteNonQuery();
-                        Console.WriteLine("Friend added successfully!");
-                    }
-                    catch (NpgsqlException ex)
-                    {
-                        Console.WriteLine($"An error occurred: {ex.Message}");
-                    }
+                    cmdAddFriend.Parameters.AddWithValue("@currentUserId", currentUserId);
+                    cmdAddFriend.Parameters.AddWithValue("@friendNickname", friendNickname);
+
+                    int rowsAffected = cmdAddFriend.ExecuteNonQuery();
+                    if (rowsAffected > 0)
+                        Console.WriteLine("Friend added successfully.");
+                    else
+                        Console.WriteLine("Failed to add friend.");
                 }
             }
         }

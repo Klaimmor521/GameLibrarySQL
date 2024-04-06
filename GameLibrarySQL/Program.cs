@@ -49,11 +49,11 @@ namespace GameLibrarySQL
 
                         if(logging.loginUser(login, password))
                         {
-                            Console.WriteLine("Great!");
-                            userActions();
+                            Console.WriteLine("Great! Your user ID is: " + logging.currentUserId);
+                            userActions(logging.currentUserId);
                         }
                         else
-                            Console.WriteLine("This user is not existing or your login and password incorrect!");
+                            Console.WriteLine("This user is not existing or your login and password are incorrect!");
                         break;
                     //Выйти из консоли
                     case 3:
@@ -80,19 +80,19 @@ namespace GameLibrarySQL
             while(input.Length > maxLength || input.Length < minLength);
             return input;
         }
-        static void userActions()
+        static void userActions(int currentUserId)
         {
             Logging logging = new Logging(connectionString);
             int action;
             while(true)
             {
-                Console.WriteLine("----------------------------------------");
+                Console.WriteLine("-----------------------------------");
                 Console.WriteLine("You are in your game library!\nView all data(1)\nAdd game(2)\nDelete game(3)\nAdd a friend(4)\nDelete a friend(5)\nSee all friends(6)\nExit(7)");
                 action = Convert.ToInt32(Console.ReadLine());
                 switch (action) 
                 {
                     case 1:
-                        logging.viewAllData(); 
+                        logging.viewAllData(currentUserId); 
                         break;
                     case 2:
                         logging.addGame();
@@ -101,13 +101,13 @@ namespace GameLibrarySQL
                         logging.removeGame();
                         break;
                     case 4:
-                        logging.addFriend(logging.currentUserId);
+                        logging.addFriend(currentUserId);
                         break;
                     case 5:
-                        logging.deleteFriend(logging.currentUserId);
+                        logging.deleteFriend(currentUserId);
                         break;
                     case 6:
-                        logging.seeAllFriends(logging.currentUserId);
+                        logging.seeAllFriends(currentUserId);
                         break;
                     case 7:
                         return;
