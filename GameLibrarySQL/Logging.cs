@@ -28,7 +28,7 @@ namespace GameLibrarySQL
                     if (result != DBNull.Value && result != null)
                     {
                         this.currentUserId = Convert.ToInt32(result);
-                        Console.WriteLine($"Logged in with user ID: {this.currentUserId}");
+                        //Console.WriteLine($"Logged in with user ID: {this.currentUserId}"); //Проверка Id
                         return true;
                     }
                     else
@@ -42,7 +42,7 @@ namespace GameLibrarySQL
         }
         public void viewAllData(int currentUserId)
         {
-            Console.WriteLine($"Current User ID: {currentUserId}");
+            //Console.WriteLine($"Current User ID: {currentUserId}");  //Проверка Id
             try
             {
                 using (var connection = new NpgsqlConnection(connectionString))
@@ -72,7 +72,6 @@ namespace GameLibrarySQL
                             {
                                 Console.WriteLine($"{reader["game_name"]}, {reader["genre_name"]}, {reader["platform_name"]}");
                             }
-                            Console.WriteLine("-----------");
                         }
                     }
                 }
@@ -94,7 +93,7 @@ namespace GameLibrarySQL
             using (var connection = new NpgsqlConnection(connectionString))
             {
                 connection.Open();
-                // Добавление игры в таблицу `game`.
+                //Добавление игры в таблицу `game`
                 var queryGame = "INSERT INTO game (name, genre_id, platform_id) VALUES (@name, @genre_id, @platform_id) RETURNING id";
 
                 using (var commandGame = new NpgsqlCommand(queryGame, connection))
@@ -104,9 +103,9 @@ namespace GameLibrarySQL
                     commandGame.Parameters.AddWithValue("@platform_id", platformId);
                     try
                     {
-                        // Выполняем запрос и получаем ID добавленной игры.
+                        //Выполняем запрос и получаем ID добавленной игры
                         gameId = (int)commandGame.ExecuteScalar();
-                        Console.WriteLine("Game added to game table successfully!");
+                        //Console.WriteLine("Game added to game table successfully!"); //Проверка
                     }
                     catch (NpgsqlException e)
                     {
@@ -115,7 +114,7 @@ namespace GameLibrarySQL
                     }
                 }
 
-                // Добавление записи в таблицу `library`.
+                //Добавление в таблицу `library`
                 var queryLibrary = "INSERT INTO library (user_id, game_id) VALUES (@userId, @gameId)";
 
                 using (var commandLibrary = new NpgsqlCommand(queryLibrary, connection))
@@ -159,9 +158,9 @@ namespace GameLibrarySQL
                     {
                         int result = commandGame.ExecuteNonQuery();
                         if (result > 0)
-                            Console.WriteLine("Game deleted successfully.");
+                            Console.WriteLine("Game deleted successfully!");
                         else
-                            Console.WriteLine("Game not found.");
+                            Console.WriteLine("Game not found!");
                     }
                     catch (NpgsqlException e)
                     {
@@ -179,7 +178,7 @@ namespace GameLibrarySQL
             //Проверка на пустой ввод
             if (string.IsNullOrEmpty(friendNickname))
             {
-                Console.WriteLine("Nickname cannot be empty.");
+                Console.WriteLine("Nickname cannot be empty!");
                 return;
             }
 
@@ -195,7 +194,7 @@ namespace GameLibrarySQL
                     int friendExists = Convert.ToInt32(cmdCheckFriend.ExecuteScalar());
                     if (friendExists > 0)
                     {
-                        Console.WriteLine("This friend has already been added.");
+                        Console.WriteLine("This friend has already been added!");
                         return;
                     }
                 }
@@ -208,17 +207,17 @@ namespace GameLibrarySQL
 
                     int rowsAffected = cmdAddFriend.ExecuteNonQuery();
                     if (rowsAffected > 0)
-                        Console.WriteLine("Friend added successfully.");
+                        Console.WriteLine("Friend added successfully!");
                     else
-                        Console.WriteLine("Failed to add friend.");
+                        Console.WriteLine("Failed to add friend!");
                 }
             }
         }
         //Удалить друга
         public void deleteFriend(int currentUserId)
         {
-            Console.WriteLine("Enter the nickname of the friend you want to remove:");
-            string friendNickname = Console.ReadLine().Trim();
+            Console.WriteLine("Enter the nickname of the friend you want to remove: ");
+            string friendNickname = Console.ReadLine().Trim(); //Trim спасает от лишних пробелов
 
             using (var connection = new NpgsqlConnection(connectionString))
             {
@@ -232,9 +231,9 @@ namespace GameLibrarySQL
 
                     int rowsAffected = deleteFriendCommand.ExecuteNonQuery();
                     if (rowsAffected > 0)
-                        Console.WriteLine("Friend removed successfully.");
+                        Console.WriteLine("Friend removed successfully!");
                     else
-                        Console.WriteLine("No friend found with that nickname.");
+                        Console.WriteLine("No friend found with that nickname!");
                 }
             }
         }
@@ -254,11 +253,11 @@ namespace GameLibrarySQL
                     {
                         if (!reader.HasRows)
                         {
-                            Console.WriteLine("You have no friends added.");
+                            Console.WriteLine("You have no friends added!");
                         }
                         else
                         {
-                            Console.WriteLine("Your friends:");
+                            Console.WriteLine("Your friends: ");
                             while (reader.Read())
                             {
                                 Console.WriteLine(reader["nickname"].ToString());

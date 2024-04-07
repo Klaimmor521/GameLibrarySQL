@@ -21,27 +21,29 @@ namespace GameLibrarySQL
             //Взаимодействие с пользователем
             while (true)
             {
-                Console.WriteLine("What you wanna do?\nSing up(1)\nLogin(2)\nExit(3)");
+                Console.WriteLine("-------------LOGIN / SIGN UP-----------");
+                Console.WriteLine("Sign up(1)\tLogin(2)\tExit(3)");
                 chose = Convert.ToInt32(Console.ReadLine());
                 switch(chose)
                 {
                     //Регистрация
                     case 1:
-                        nickname = GetInput("Enter your nickname (Maximum 30 characters and minimum 3): ", 30, 3);
-                        login = GetInput("Enter your login (Maximum 30 characters and minimum 3): ", 30, 3);
-                        password = GetInput("Enter your password (Maximum 30 characters and minimum 3): ", 30, 3);
-                        email = GetInput("Enter your email (Maximum 30 characters and minimum 3): ", 30, 3);
+                        Console.WriteLine("-----------SIGN UP-----------");
+                        nickname = GetInput("Your nickname (Maximum 30 characters and minimum 3): ", 30, 3);
+                        login = GetInput("Your login (Maximum 30 characters and minimum 3): ", 30, 3);
+                        password = GetInput("Your password (Maximum 30 characters and minimum 3): ", 30, 3);
+                        email = GetInput("Your email (Maximum 30 characters and minimum 3): ", 30, 3);
 
                         if (registration.RegisterUser(nickname, login, password, email))
                         {
                             Console.WriteLine("The registration went successfully!");
                         }
                         else
-                            Console.WriteLine("Something went wrong or your account are already has on library!");
+                            Console.WriteLine("Something went wrong or your account are already has on game library!");
                         break;
-
                     //Войти в аккаунт
                     case 2:
+                        Console.WriteLine("-----------LOGIN-----------");
                         Console.WriteLine("Enter your login: ");
                         login = Console.ReadLine();
                         Console.WriteLine("Enter your password: ");
@@ -49,7 +51,7 @@ namespace GameLibrarySQL
 
                         if(logging.loginUser(login, password))
                         {
-                            Console.WriteLine("Great! Your user ID is: " + logging.currentUserId);
+                            //Console.WriteLine("Great! Your user ID is: " + logging.currentUserId); //Проверка userId
                             userActions(logging.currentUserId);
                         }
                         else
@@ -73,9 +75,9 @@ namespace GameLibrarySQL
                 Console.WriteLine(prompt);
                 input = Console.ReadLine();
                 if(input.Length > maxLength)
-                    Console.WriteLine($"Input longer than {maxLength} characters! Try again");
+                    Console.WriteLine($"Input longer than {maxLength} characters! Try again!");
                 else if(input.Length < minLength)
-                    Console.WriteLine($"Input less than {minLength} characters! Try again");
+                    Console.WriteLine($"Input less than {minLength} characters! Try again!");
             }
             while(input.Length > maxLength || input.Length < minLength);
             return input;
@@ -86,8 +88,8 @@ namespace GameLibrarySQL
             int action;
             while(true)
             {
-                Console.WriteLine("-----------LIBRARY-----------");
-                Console.WriteLine("You are in your game library!\nView all data(1)\nAdd game(2)\nDelete game(3)\nAdd a friend(4)\nDelete a friend(5)\nSee all friends(6)\nExit(7)");
+                Console.WriteLine("-----------GAME LIBRARY-----------");
+                Console.WriteLine("Show all games(1)"+" | "+"Add new game(2)"+ " | " + "Delete game(3)"+ " | " + "Add new friend(4)"+ " | " + "Delete friend(5)"+ " | " + "See all friends(6)"+ " | " + "Exit(7)");
                 action = Convert.ToInt32(Console.ReadLine());
                 switch (action) 
                 {
