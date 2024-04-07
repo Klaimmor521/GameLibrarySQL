@@ -51,16 +51,15 @@ namespace GameLibrarySQL
 
                     var query = @"
                     SELECT g.name AS game_name, ge.name AS genre_name, p.name AS platform_name 
-                FROM library l
-                JOIN game g ON l.game_id = g.id
-                JOIN genre ge ON g.genre_id = ge.id
-                JOIN platform p ON g.platform_id = p.id
-                WHERE l.user_id = @currentUserId";  
-    
+                    FROM library l
+                    JOIN game g ON l.game_id = g.id
+                    JOIN genre ge ON g.genre_id = ge.id
+                    JOIN platform p ON g.platform_id = p.id
+                    WHERE l.user_id = @currentUserId";
+
                     using (var command = new NpgsqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@currentUserId", currentUserId);
-
                         using (var reader = command.ExecuteReader())
                         {
                             if (!reader.HasRows)
@@ -71,7 +70,7 @@ namespace GameLibrarySQL
                             Console.WriteLine("---Games---");
                             while (reader.Read())
                             {
-                                Console.WriteLine($"{reader["name"]}, {reader["genre_name"]}, {reader["platform_name"]}");
+                                Console.WriteLine($"{reader["game_name"]}, {reader["genre_name"]}, {reader["platform_name"]}");
                             }
                             Console.WriteLine("-----------");
                         }
@@ -84,30 +83,53 @@ namespace GameLibrarySQL
             }
         }
         //Добавление игры
-        public void addGame()
+        public void addGame(int currentUserId)
         {
-
-            Console.WriteLine("Adding a new game:");
+            Console.WriteLine("Adding a new game...");
             string title = Program.GetInput("Enter a game title: ", 30, 3);
             int genreId = getGenreId();
             int platformId = getPlatformId();
+            int gameId = 0;
+
             using (var connection = new NpgsqlConnection(connectionString))
             {
                 connection.Open();
-                var query = "INSERT INTO Game (name, genre_id, platform_id) VALUES (@name, @genre_id, @platform_id)";
-                using (var command = new NpgsqlCommand(query, connection))
+                // Добавление игры в таблицу `game`.
+                var queryGame = "INSERT INTO game (name, genre_id, platform_id) VALUES (@name, @genre_id, @platform_id) RETURNING id";
+
+                using (var commandGame = new NpgsqlCommand(queryGame, connection))
                 {
-                    command.Parameters.AddWithValue("@name", title);
-                    command.Parameters.AddWithValue("@genre_id", genreId);
-                    command.Parameters.AddWithValue("@platform_id", platformId);
+                    commandGame.Parameters.AddWithValue("@name", title);
+                    commandGame.Parameters.AddWithValue("@genre_id", genreId);
+                    commandGame.Parameters.AddWithValue("@platform_id", platformId);
                     try
                     {
-                        command.ExecuteNonQuery();
-                        Console.WriteLine("Game added successfully!");
+                        // Выполняем запрос и получаем ID добавленной игры.
+                        gameId = (int)commandGame.ExecuteScalar();
+                        Console.WriteLine("Game added to game table successfully!");
                     }
                     catch (NpgsqlException e)
                     {
-                        Console.WriteLine($"Failed to add game. Error: {e.Message}");
+                        Console.WriteLine($"Failed to add game to game table. Error: {e.Message}");
+                        return;
+                    }
+                }
+
+                // Добавление записи в таблицу `library`.
+                var queryLibrary = "INSERT INTO library (user_id, game_id) VALUES (@userId, @gameId)";
+
+                using (var commandLibrary = new NpgsqlCommand(queryLibrary, connection))
+                {
+                    commandLibrary.Parameters.AddWithValue("@userId", currentUserId);
+                    commandLibrary.Parameters.AddWithValue("@gameId", gameId);
+                    try
+                    {
+                        commandLibrary.ExecuteNonQuery();
+                        Console.WriteLine("Game added to user's library successfully!");
+                    }
+                    catch (NpgsqlException e)
+                    {
+                        Console.WriteLine($"Failed to add game to user's library. Error: {e.Message}");
                     }
                 }
             }

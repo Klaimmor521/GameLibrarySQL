@@ -86,7 +86,7 @@ namespace GameLibrarySQL
             int action;
             while(true)
             {
-                Console.WriteLine("-----------------------------------");
+                Console.WriteLine("-----------LIBRARY-----------");
                 Console.WriteLine("You are in your game library!\nView all data(1)\nAdd game(2)\nDelete game(3)\nAdd a friend(4)\nDelete a friend(5)\nSee all friends(6)\nExit(7)");
                 action = Convert.ToInt32(Console.ReadLine());
                 switch (action) 
@@ -95,7 +95,7 @@ namespace GameLibrarySQL
                         logging.viewAllData(currentUserId); 
                         break;
                     case 2:
-                        logging.addGame();
+                        logging.addGame(currentUserId);
                         break;
                     case 3:
                         logging.removeGame();
